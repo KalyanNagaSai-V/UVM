@@ -28,22 +28,17 @@ module tb_compare_demo;
   initial begin
     p1 = my_packet::type_id::create("p1");
     p2 = my_packet::type_id::create("p2");
-   
-
     
     p1.a = 1; p1.b = 55; p1.n = "hello"; p1.st = GREEN;
     p2.a = 1; p2.b = 55; p2.n = "hello"; p2.st = GREEN;
 
-    
     result = p1.compare(p2);
-    $display("p1 vs p2 compare = %0d", result); 
+    $display("p1 vs p2 compare = %0d", result);
 
-   
-    p2.b = 99;
+     p2.b = 99;
     result = p1.compare(p2);
     $display("p1 vs modified p2 compare = %0d", result); 
-    
-  
   end
 endmodule
+
 
