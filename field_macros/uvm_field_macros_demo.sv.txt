@@ -1,0 +1,63 @@
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
+typedef enum {RED, GREEN, BLUE} color_e;
+
+class my_packet extends uvm_object;
+
+  
+  rand bit a;  // UVM_ALL_ON: copy, compare, print
+  rand int b;     // UVM_DEFAULT: recommended default
+  string n;       // UVM_NOPRINT: not printed
+  bit nocopy_field;   // UVM_NOCOPY: not copied
+  bit nocompare_field;  // UVM_NOCOMPARE: not compared
+  uvm_object ref_obj; // UVM_REFERENCE: copy handle only
+  bit readonly_field; // UVM_READONLY: cannot be set via config
+  bit nopack_field; // UVM_NOPACK: not packed/unpacked
+
+  `uvm_object_utils_begin(my_packet)
+    `uvm_field_int(a, UVM_ALL_ON)
+    `uvm_field_int(b, UVM_DEFAULT)
+    `uvm_field_string(n, UVM_NOPRINT)
+    `uvm_field_int(nocopy_field, UVM_NOCOPY)
+    `uvm_field_int(nocompare_field, UVM_NOCOMPARE)
+    `uvm_field_object(ref_obj, UVM_REFERENCE)
+    `uvm_field_int(readonly_field, UVM_READONLY)
+    `uvm_field_int(nopack_field, UVM_NOPACK)
+  `uvm_object_utils_end
+
+  function new(string name="my_packet");
+    super.new(name);
+  endfunction
+endclass
+
+
+module tb;
+  my_packet p1, p2;
+  bit cmp;
+
+  initial begin
+    
+    p1 = my_packet::type_id::create("p1");
+
+    p1.a = 1; p1.b = 10; p1.n = "hello";
+    p1.nocopy_field = 5; p1.nocompare_field = 7;
+    p1.readonly_field = 1; p1.nopack_field = 9;
+    p1.ref_obj = my_packet::type_id::create("ref");
+
+    
+    $cast(p2, p1.clone());
+
+    // Print objects
+    $display("\n=== p1.print() ==="); p1.print();
+    $display("\n=== p2.print() ==="); p2.print();
+
+    // Compare objects
+    cmp = p1.compare(p2);
+    $display("\n=== p1.compare(p2) = %0d ===", cmp);
+
+    // Show type info
+    $display("\nType name = %s", p1.get_type_name());
+    $display("Type proxy = %s", p1.get_object_type().get_type_name());
+  end
+endmodule

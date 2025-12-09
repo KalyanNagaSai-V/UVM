@@ -1,0 +1,53 @@
+`timescale 1ns/1ns
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
+// UVM Packet Class
+class my_packet extends uvm_object;
+  bit        bin_field;     // UVM_BIN
+  int        dec_field;     // UVM_DEC
+  int unsigned uns_field;   // UVM_UNSIGNED
+  int        oct_field;     // UVM_OCT
+  int        hex_field;     // UVM_HEX
+  string     str_field;     // UVM_STRING
+  time       time_field;    // UVM_TIME
+
+  // Register fields for UVM print, copy, compare
+  `uvm_object_utils_begin(my_packet)
+    `uvm_field_int(bin_field,    UVM_BIN)
+    `uvm_field_int(dec_field,    UVM_DEC)
+    `uvm_field_int(uns_field,    UVM_UNSIGNED)
+    `uvm_field_int(oct_field,    UVM_OCT)
+    `uvm_field_int(hex_field,    UVM_HEX)
+    `uvm_field_string(str_field, UVM_STRING)
+    `uvm_field_time(time_field,  UVM_TIME)
+  `uvm_object_utils_end
+
+  // Constructor
+  function new(string name="my_packet");
+    super.new(name);
+  endfunction
+endclass
+
+// Testbench module
+module tb_field_formats;
+  my_packet p1;
+
+  initial begin
+    // Create the packet
+    p1 = my_packet::type_id::create("p1");
+
+    // Assign field values
+    p1.bin_field  = 1;
+    p1.dec_field  = 42;
+    p1.uns_field  = 100;
+    p1.oct_field  = 8;
+    p1.hex_field  = 255;
+    p1.str_field  = "Hello UVM";
+    p1.time_field = 12345;
+
+    // Print the object with field formats
+    $display("=== Print my_packet with different field formats ===");
+    p1.print();
+  end
+endmodule
