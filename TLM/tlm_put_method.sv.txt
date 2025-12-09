@@ -1,0 +1,130 @@
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
+class producer extends uvm_object;
+  rand bit[1:0]a;
+  
+  `uvm_object_utils_begin(producer)
+  `uvm_field_int(a,UVM_DEFAULT)
+  `uvm_object_utils_end
+  
+  function new(string name="");
+    super.new(name);
+  endfunction 
+ 
+endclass
+
+class component_a extends uvm_component;
+  `uvm_component_utils(component_a)
+  
+  uvm_blocking_put_port#(producer)put_port;
+  
+  
+  function new(string name="component_a",uvm_component parent=null);
+    super.new(name,parent);
+  endfunction 
+    
+    virtual function void build_phase(uvm_phase phase);
+      super.build_phase(phase);
+      put_port=new("put_port",this);
+      `uvm_info("cmpa","build phase",UVM_LOW);
+    endfunction 
+    
+    
+    virtual task run_phase(uvm_phase phase);
+      producer pr;
+      phase.raise_objection(this);
+      pr=producer::type_id::create("tr",this);
+      assert(pr.randomize());
+      `uvm_info("cmpa",$sformatf("randomized value a=%0d",pr.a),UVM_LOW);
+      put_port.put(pr);
+      phase.drop_objection(this);
+      
+    endtask
+    
+  
+endclass
+
+    class component_b extends uvm_component;
+      `uvm_component_utils(component_b)
+      
+      uvm_blocking_put_imp#(producer,component_b)put_imp;
+      
+      
+      function new(string name="component_b",uvm_component parent=null);
+                                                  super.new(name,parent);
+                                                      endfunction 
+      
+      
+      virtual function void build_phase(uvm_phase phase);
+        
+        super.build_phase(phase);
+        
+        put_imp=new("put_imp",this);
+        `uvm_info("cmpb","build phase",UVM_LOW);
+      endfunction 
+      
+      
+      virtual task put(producer b_tr);
+        `uvm_info("cmpb",$sformatf("compomnent_b received a=%0d",b_tr.a),UVM_LOW);
+      endtask 
+      
+    endclass
+    
+    
+    class my_env extends uvm_env;
+      `uvm_component_utils(my_env)
+      component_a cmpa;
+      component_b cmpb;
+      function new(string name="my_env",uvm_component parent=null);
+        super.new(name,parent);
+      endfunction 
+      
+      
+      virtual function void build_phase(uvm_phase phase);
+      super.build_phase(phase);
+      cmpa=component_a::type_id::create("cmpa",this);
+      cmpb=component_b::type_id::create("cmpb",this); 
+      endfunction 
+      
+      virtual function void connect_phase(uvm_phase phase);
+        super.connect_phase(phase);
+        cmpa.put_port.connect(cmpb.put_imp);
+      endfunction 
+     
+      
+      virtual task run_phase(uvm_phase phase);
+      super.run_phase(phase);
+      `uvm_info("my_env","Env is created",UVM_LOW);
+   endtask
+    endclass
+      
+      
+    
+    class my_test extends uvm_test;
+      `uvm_component_utils(my_test)
+      my_env env;
+      function new(string name="my_test",uvm_component parent=null);
+        super.new(name,parent);
+      endfunction 
+      
+      
+      virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        env=my_env::type_id::create("env",this);      
+     endfunction 
+      
+    
+      
+      virtual function void start_of_simulation();
+        super.start_of_simulation();
+        uvm_top.print_topology();
+      endfunction 
+    endclass
+    
+    module tb;
+      
+      initial begin
+        run_test("my_test");
+      end
+      endmodule
