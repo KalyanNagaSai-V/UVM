@@ -1,0 +1,47 @@
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
+
+typedef enum {RED, GREEN, BLUE} color_e;
+
+class my_packet extends uvm_object;
+  rand bit a;
+  rand int b;
+  string n;
+  color_e st;
+
+  `uvm_object_utils_begin(my_packet)
+    `uvm_field_int   (a , UVM_ALL_ON)
+    `uvm_field_int   (b , UVM_ALL_ON)
+    `uvm_field_string(n , UVM_ALL_ON)
+    `uvm_field_enum  (color_e,st , UVM_ALL_ON)
+  `uvm_object_utils_end
+
+  function new(string name="my_object");
+    super.new(name);
+  endfunction
+
+endclass
+
+
+module tb;
+  my_packet p1,p2,p3;
+
+  initial begin
+    p1 = my_packet::type_id::create("p1");
+    p2 = my_packet::type_id::create("p2");
+    
+    p1.a = 1;
+    p1.b = 55;
+    p1.n = "hello";
+    p1.st = GREEN;
+    
+    $cast(p3,p1.clone());
+    
+    p1.print();
+    p2.print();
+    p3.print();
+    
+
+  end
+endmodule

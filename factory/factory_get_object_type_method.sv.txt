@@ -1,0 +1,37 @@
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
+typedef enum {RED, GREEN, BLUE} color_e;
+
+class my_packet extends uvm_object;
+  rand bit a;
+  rand int b;
+  string n;
+  color_e st;
+
+  `uvm_object_utils_begin(my_packet)
+    `uvm_field_int   (a , UVM_ALL_ON)
+    `uvm_field_int   (b , UVM_ALL_ON)
+    `uvm_field_string(n , UVM_ALL_ON)
+    `uvm_field_enum  (color_e,st , UVM_ALL_ON)
+  `uvm_object_utils_end
+
+  function new(string name="my_packet");
+    super.new(name);
+  endfunction
+endclass
+
+module tb_get_object_type;
+  my_packet p1;
+  uvm_object_wrapper w;
+
+  initial begin
+    p1 = my_packet::type_id::create("p1");
+
+   
+    w = p1.get_object_type();
+
+    $display("Using get_object_type():");
+    $display("Type proxy class name: %s", w.get_type_name());
+  end
+endmodule
