@@ -1,0 +1,60 @@
+import uvm_pkg::*;
+  `include "uvm_macros.svh"
+
+  typedef struct {
+    bit [3:0] id;
+    int value;
+  } my_struct_t;
+
+  typedef enum {A, B, C} color;
+
+
+  class my_object extends uvm_object;
+
+    rand bit a;
+    rand int b;
+    string n;
+    color st;
+
+    my_struct_t st1;   // now valid!
+
+    `uvm_object_utils_begin(my_object)
+      `uvm_field_int(a, UVM_ALL_ON)
+      `uvm_field_int(b, UVM_ALL_ON)
+      `uvm_field_string(n, UVM_ALL_ON)
+      `uvm_field_enum(color, st, UVM_ALL_ON)
+
+      // Register struct fields separately
+      `uvm_field_int(st1.id, UVM_ALL_ON)
+      `uvm_field_int(st1.value, UVM_ALL_ON)
+
+    `uvm_object_utils_end
+
+    function new(string name="my_object");
+      super.new(name);
+    endfunction
+
+  endclass
+
+
+module tb;
+
+  my_object obj;
+  uvm_tree_printer tr;
+
+  initial begin
+    obj = my_object::type_id::create("obj");
+
+    obj.a = 1;
+    obj.b = 22;
+    obj.n = "hello";
+    obj.st = B;
+
+    obj.st1.id    = 4'hA;
+    obj.st1.value = 1234;
+
+    tr = new();
+    obj.print(tr);
+  end
+
+endmodule
