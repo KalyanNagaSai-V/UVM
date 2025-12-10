@@ -1,0 +1,138 @@
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
+class producer extends uvm_object;
+  rand bit [1:0] a;
+
+  `uvm_object_utils_begin(producer)
+    `uvm_field_int(a, UVM_DEFAULT)
+  `uvm_object_utils_end
+
+  function new(string name = "producer");
+    super.new(name);
+  endfunction
+endclass
+
+
+// requester: calls try_get to fetch a producer
+class get_component_a extends uvm_component;
+  `uvm_component_utils(get_component_a)
+
+  uvm_nonblocking_get_port#(producer) get_port;
+
+  function new(string name="get_component_a", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    get_port = new("get_port", this);
+    `uvm_info("gcmpa","build phase",UVM_LOW)
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    producer pr;
+    bit ok;
+    phase.raise_objection(this);
+
+    // attempt to fetch an item
+    ok = get_port.try_get(pr); // try_get sets pr if returns 1
+    if (ok) begin
+      `uvm_info("gcmpa",$sformatf("try_get succeeded, received a=%0d", pr.a),UVM_LOW);
+    end else begin
+      `uvm_info("gcmpa","try_get failed (no item available)",UVM_LOW);
+    end
+
+    phase.drop_objection(this);
+  endtask
+endclass
+
+
+// provider: creates and returns a producer object on try_get
+class get_component_b extends uvm_component;
+  `uvm_component_utils(get_component_b)
+
+  uvm_nonblocking_get_imp#(producer, get_component_b) get_imp;
+
+  function new(string name="get_component_b", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    get_imp = new("get_imp", this);
+    `uvm_info("gcmpb","build phase",UVM_LOW)
+  endfunction
+
+  // try_get must match signature: bit try_get(output T t)
+  function bit try_get(output producer t);
+    // create a new producer and randomize it before returning
+    t = producer::type_id::create($sformatf("pr_from_%s", get_full_name()), this);
+    if (!t.randomize()) begin
+      `uvm_error("gcmpb","randomize failed in try_get")
+      return 0;
+    end
+    `uvm_info("gcmpb",$sformatf("try_get provided a=%0d", t.a), UVM_LOW);
+    return 1;
+  endfunction
+
+  // indicates whether there's data to get; here always 1
+  function bit can_get();
+    return 1;
+  endfunction
+
+endclass
+
+
+// environment and test using the get variant
+class my_get_env extends uvm_env;
+  `uvm_component_utils(my_get_env)
+
+  get_component_a ga;
+  get_component_b gb;
+
+  function new(string name="my_get_env", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    ga = get_component_a::type_id::create("ga", this);
+    gb = get_component_b::type_id::create("gb", this);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    ga.get_port.connect(gb.get_imp);
+  endfunction
+endclass
+
+
+class my_get_test extends uvm_test;
+  `uvm_component_utils(my_get_test)
+
+  my_get_env env;
+
+  function new(string name="my_get_test", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    env = my_get_env::type_id::create("env", this);
+  endfunction
+
+  function void start_of_simulation();
+    super.start_of_simulation();
+    uvm_top.print_topology();
+  endfunction
+endclass
+
+
+module tb_get;
+  initial begin
+    run_test("my_get_test");
+  end
+endmodule
+
+
